@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON to AI Schema Converter</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,700,1,0">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              md: {
+                primary: 'var(--md-sys-color-primary)',
+                onPrimary: 'var(--md-sys-color-on-primary)',
+                primaryContainer: 'var(--md-sys-color-primary-container)',
+                onPrimaryContainer: 'var(--md-sys-color-on-primary-container)',
+                secondary: 'var(--md-sys-color-secondary)',
+                onSecondary: 'var(--md-sys-color-on-secondary)',
+                error: 'var(--md-sys-color-error)',
+                background: 'var(--md-sys-color-background)',
+                onBackground: 'var(--md-sys-color-on-background)',
+                surface: 'var(--md-sys-color-surface)',
+                onSurface: 'var(--md-sys-color-on-surface)',
+                surfaceVariant: 'var(--md-sys-color-surface-variant)',
+                onSurfaceVariant: 'var(--md-sys-color-on-surface-variant)',
+                outline: 'var(--md-sys-color-outline)',
+                // Syntax Highlighting Tokens
+                tokenKey: 'var(--token-color-key)',
+                tokenString: 'var(--token-color-string)',
+                tokenType: 'var(--token-color-type)',
+                tokenPunctuation: 'var(--token-color-punctuation)',
+                tokenBoolean: 'var(--token-color-boolean)',
+              }
+            },
+            fontFamily: {
+              sans: ['DM Sans', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            boxShadow: {
+              'soft-xl': '0 20px 40px -10px rgba(0, 0, 0, 0.15)',
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+      .material-symbols-rounded {
+        font-family: 'Material Symbols Rounded';
+        font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+        font-size: 24px;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      
+      :root {
+        /* Light Theme */
+        --md-sys-color-primary: #1A1A1A;
+        --md-sys-color-on-primary: #FFFFFF;
+        --md-sys-color-primary-container: #E6B325;
+        --md-sys-color-on-primary-container: #1A1A1A;
+        --md-sys-color-secondary: #5C5855;
+        --md-sys-color-on-secondary: #FFFFFF;
+        --md-sys-color-error: #B00020;
+        --md-sys-color-background: #F2F0E9;
+        --md-sys-color-on-background: #1A1A1A;
+        --md-sys-color-surface: #FFFFFF;
+        --md-sys-color-on-surface: #1A1A1A;
+        --md-sys-color-surface-variant: #E6E4DD;
+        --md-sys-color-on-surface-variant: #5C5855;
+        --md-sys-color-outline: #D8D6D0;
+        
+        /* Syntax - Light */
+        --token-color-key: #1A1A1A;
+        --token-color-string: #6D5D4B;
+        --token-color-type: #999999;
+        --token-color-boolean: #E6B325;
+        --token-color-punctuation: #CCCCCC;
+      }
+
+      .dark {
+        /* Dark Theme */
+        --md-sys-color-primary: #F0F0F0;
+        --md-sys-color-on-primary: #1A1918;
+        --md-sys-color-primary-container: #D4A373;
+        --md-sys-color-on-primary-container: #1A1918;
+        --md-sys-color-secondary: #A8A29E;
+        --md-sys-color-on-secondary: #1A1918;
+        --md-sys-color-error: #CF6679;
+        --md-sys-color-background: #121212;
+        --md-sys-color-on-background: #E7E5E4;
+        --md-sys-color-surface: #1E1E1E;
+        --md-sys-color-on-surface: #E7E5E4;
+        --md-sys-color-surface-variant: #2C2C2C;
+        --md-sys-color-on-surface-variant: #A8A29E;
+        --md-sys-color-outline: #333333;
+        
+        /* Syntax - Dark */
+        --token-color-key: #E7E5E4;
+        --token-color-string: #D4A373;
+        --token-color-type: #666666;
+        --token-color-boolean: #FFFFFF;
+        --token-color-punctuation: #444444;
+      }
+
+      body {
+        background-color: var(--md-sys-color-background);
+        color: var(--md-sys-color-on-background);
+        transition: background-color 0.4s ease, color 0.4s ease;
+      }
+
+      /* Syntax Highlighting */
+      .token-key { color: var(--token-color-key); font-weight: 700; }
+      .token-string { color: var(--token-color-string); }
+      .token-type { color: var(--token-color-type); font-style: italic; }
+      .token-punctuation { color: var(--token-color-punctuation); }
+      .token-boolean { color: var(--token-color-boolean); font-weight: 700; text-transform: uppercase; }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--md-sys-color-surface-variant); }
+      ::-webkit-scrollbar-thumb:hover { background: var(--md-sys-color-secondary); }
+
+      /* Utility */
+      .hidden { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen w-full font-sans flex flex-col bg-md-background text-md-onBackground">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 left-0 right-0 z-50 h-24 flex items-center justify-between px-8 md:px-12 bg-md-background transition-colors">
+        <div class="flex items-center gap-6">
+            <div class="w-10 h-10 bg-md-primary flex items-center justify-center rounded-sm">
+                <span class="material-symbols-rounded text-md-onPrimary text-2xl">grid_4x4</span>
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight uppercase">Schema<span class="opacity-40">Gen</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="themeToggle" class="flex items-center justify-center w-14 h-14 transition-all duration-200 text-md-onSurface hover:bg-md-surfaceVariant rounded-full" title="Toggle Theme">
+                <span class="material-symbols-rounded text-[28px]">light_mode</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-2 min-h-[calc(100vh-6rem)]">
+        
+        <!-- Left: Input Section -->
+        <section class="relative flex flex-col p-8 md:p-12 min-h-[500px]">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-xl font-bold text-md-secondary uppercase tracking-widest">Input JSON</h2>
+                    <span id="inputCharCount" class="text-xs font-mono font-medium text-md-onSurfaceVariant/70">0 chars</span>
+                </div>
+                <div class="flex gap-2">
+                    <input type="file" id="fileInput" class="hidden" accept=".json" />
+                    
+                    <button id="uploadBtn" class="flex items-center justify-center w-14 h-14 transition-all duration-200 text-md-onSurface hover:bg-md-surfaceVariant rounded-full" title="Upload JSON">
+                        <span class="material-symbols-rounded text-[28px]">upload_file</span>
+                    </button>
+                    
+                    <button id="clearBtn" class="flex items-center justify-center w-14 h-14 transition-all duration-200 text-md-error hover:bg-md-error/10 rounded-full" title="Clear">
+                        <span class="material-symbols-rounded text-[28px]">delete</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-1 relative group flex flex-col">
+                <textarea
+                    id="inputJson"
+                    placeholder="// ENTER JSON DATA HERE"
+                    class="w-full flex-1 min-h-[300px] resize-y lg:resize-none bg-transparent font-mono text-base md:text-lg leading-relaxed text-md-onBackground outline-none placeholder:text-md-onBackground/20 placeholder:font-bold placeholder:uppercase"
+                    spellcheck="false"
+                ></textarea>
+                
+                <div id="errorToast" class="hidden absolute bottom-4 right-4 bg-md-error text-md-onPrimary px-4 py-2 text-sm font-bold uppercase tracking-wider shadow-lg">
+                    Malformed JSON
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Output Section -->
+        <section class="relative flex flex-col bg-md-surface p-8 md:p-12 shadow-soft-xl z-10 min-h-[500px]">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-xl font-bold text-md-secondary uppercase tracking-widest">Schema Output</h2>
+                    <div class="flex gap-3 text-xs font-mono font-medium">
+                        <span id="outputCharCount" class="text-md-onSurfaceVariant/70">0 chars</span>
+                        <span id="savedPercent" class="hidden text-md-primary font-bold">-0% SIZE</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button id="minifyBtn" class="flex items-center justify-center w-14 h-14 transition-all duration-200 text-md-onSurface hover:bg-md-surfaceVariant rounded-full" title="Toggle Minify">
+                        <span class="material-symbols-rounded text-[28px]">unfold_less</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex-1 relative flex flex-col">
+                <!-- Empty State -->
+                <div id="emptyState" class="flex-1 flex flex-col items-center justify-center opacity-60 select-none">
+                    <span class="material-symbols-rounded text-6xl text-md-onSurfaceVariant/20 mb-4" style="font-size: 60px;">data_object</span>
+                    <span class="text-xl font-bold uppercase tracking-widest text-md-onSurfaceVariant/40">Ready to Generate</span>
+                </div>
+
+                <!-- Code Output -->
+                <div id="outputContainer" class="hidden flex-1 relative overflow-hidden bg-md-surfaceVariant/30 -mx-4 md:-mx-8 px-4 md:px-8 py-4">
+                    <div class="flex-1 overflow-auto custom-scrollbar h-full">
+                        <pre id="codeBlock" class="font-mono text-sm leading-7 transition-all duration-300 whitespace-pre-wrap break-all"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 grid grid-cols-2 gap-6">
+                <button id="downloadBtn" disabled class="flex items-center justify-center gap-4 h-16 px-10 font-bold text-lg uppercase tracking-wider transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed transform active:scale-[0.98] bg-md-surfaceVariant text-md-onSurfaceVariant enabled:hover:bg-md-secondary enabled:hover:text-md-onSecondary w-full">
+                    <span class="material-symbols-rounded text-2xl">download</span>
+                    <span>Download</span>
+                </button>
+                
+                <button id="copyBtn" disabled class="flex items-center justify-center gap-4 h-16 px-10 font-bold text-lg uppercase tracking-wider transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed transform active:scale-[0.98] bg-md-primary text-md-onPrimary enabled:hover:bg-md-primaryContainer enabled:hover:text-md-onPrimaryContainer shadow-xl enabled:hover:shadow-2xl w-full">
+                    <span id="copyIcon" class="material-symbols-rounded text-2xl">content_copy</span>
+                    <span id="copyText">Copy</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- LOGIC: Schema Generator ---
+        
+        function getBaseType(value) {
+            if (value === null) return "null";
+            if (Array.isArray(value)) return "Array";
+            if (typeof value === 'string') return "String";
+            if (typeof value === 'number') return "Number";
+            if (typeof value === 'boolean') return "Boolean";
+            if (typeof value === 'object') return "Object";
+            return "Unknown";
+        }
+
+        function mergeTypes(typeA, typeB) {
+            if (typeA === undefined || typeA === "undefined") return typeB;
+            if (typeB === undefined || typeB === "undefined") return typeA;
+            if (typeA === typeB) return typeA;
+            
+            if (typeof typeA === 'object' && typeA !== null && !Array.isArray(typeA) &&
+                typeof typeB === 'object' && typeB !== null && !Array.isArray(typeB)) {
+                const allKeys = new Set([...Object.keys(typeA), ...Object.keys(typeB)]);
+                const merged = {};
+                allKeys.forEach(key => {
+                    merged[key] = mergeTypes(typeA[key], typeB[key]);
+                });
+                return merged;
+            }
+            
+            if (Array.isArray(typeA) && Array.isArray(typeB)) {
+                return [mergeTypes(typeA[0], typeB[0])];
+            }
+            
+            const strA = typeof typeA === 'string' ? typeA : 'Object';
+            const strB = typeof typeB === 'string' ? typeB : 'Object';
+            const partsA = strA.split(" | ");
+            const partsB = strB.split(" | ");
+            const combined = Array.from(new Set([...partsA, ...partsB])).sort();
+            
+            if (typeof typeA === 'object' || typeof typeB === 'object') {
+                const typeNameA = Array.isArray(typeA) ? "Array" : (typeof typeA === 'object' ? "Object" : typeA);
+                const typeNameB = Array.isArray(typeB) ? "Array" : (typeof typeB === 'object' ? "Object" : typeB);
+                if (typeNameA === typeNameB) return typeA;
+                return `${typeNameA} | ${typeNameB}`;
+            }
+            
+            return combined.join(" | ");
+        }
+
+        function analyze(data) {
+            const type = getBaseType(data);
+            if (type === "Array") {
+                if (data.length === 0) return [];
+                let mergedSchema = analyze(data[0]);
+                for (let i = 1; i < data.length; i++) {
+                    const nextSchema = analyze(data[i]);
+                    mergedSchema = mergeTypes(mergedSchema, nextSchema);
+                }
+                return [mergedSchema];
+            }
+            if (type === "Object") {
+                const schema = {};
+                Object.keys(data).forEach(key => {
+                    schema[key] = analyze(data[key]);
+                });
+                return schema;
+            }
+            return type;
+        }
+
+        function formatSchema(schema, minify = true) {
+            const indent = minify ? "" : "  ";
+            const newline = minify ? "" : "\n";
+            const space = minify ? "" : " ";
+
+            function stringify(obj, depth = 0) {
+                const currentIndent = minify ? "" : indent.repeat(depth);
+                const nextIndent = minify ? "" : indent.repeat(depth + 1);
+
+                if (Array.isArray(obj)) {
+                    if (obj.length === 0) return "[]";
+                    const items = stringify(obj[0], depth + 1);
+                    return `[${newline}${nextIndent}${items}${newline}${currentIndent}]`;
+                }
+
+                if (typeof obj === 'object' && obj !== null) {
+                    const keys = Object.keys(obj);
+                    if (keys.length === 0) return "{}";
+                    const props = keys.map(key => {
+                        const validKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `"${key}"`;
+                        return `${nextIndent}${validKey}:${space}${stringify(obj[key], depth + 1)}`;
+                    }).join("," + (minify ? "" : "\n"));
+                    return `{${newline}${props}${newline}${currentIndent}}`;
+                }
+
+                if (typeof obj === 'string') {
+                    const isTypeSignature = /^(String|Number|Boolean|Object|Array|null|undefined|Unknown)(\s\|\s(String|Number|Boolean|Object|Array|null|undefined|Unknown))*$/.test(obj);
+                    if (isTypeSignature) {
+                        return obj;
+                    }
+                    return `"${obj}"`;
+                }
+                return String(obj);
+            }
+            return stringify(schema);
+        }
+
+        function generateOptimizedSchema(jsonString, minify = true) {
+            try {
+                const parsed = JSON.parse(jsonString);
+                const schemaStructure = analyze(parsed);
+                return formatSchema(schemaStructure, minify);
+            } catch (e) {
+                throw new Error("Invalid JSON Input");
+            }
+        }
+
+        function highlightCode(input) {
+            if (!input) return '';
+            const regex = /("[^"]+":)|(\b(String|Number|Boolean|Object|Array|Unknown|null)\b)|("[^"]*")|([{}\[\],:|])/g;
+            
+            let html = '';
+            let lastIndex = 0;
+            let match;
+
+            const escapeHtml = (unsafe) => {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            };
+
+            while ((match = regex.exec(input)) !== null) {
+                if (match.index > lastIndex) {
+                    html += `<span>${escapeHtml(input.slice(lastIndex, match.index))}</span>`;
+                }
+                
+                const fullMatch = escapeHtml(match[0]);
+                
+                if (match[1]) { // Key
+                    html += `<span class="token-key">${fullMatch}</span>`;
+                } else if (match[2]) { // Type
+                    html += `<span class="token-type">${fullMatch}</span>`;
+                } else if (match[4]) { // String Value
+                    html += `<span class="token-string">${fullMatch}</span>`;
+                } else if (match[5]) { // Punctuation
+                    html += `<span class="token-punctuation">${fullMatch}</span>`;
+                } else {
+                    html += `<span>${fullMatch}</span>`;
+                }
+                
+                lastIndex = regex.lastIndex;
+            }
+            
+            if (lastIndex < input.length) {
+                html += `<span>${escapeHtml(input.slice(lastIndex))}</span>`;
+            }
+            
+            return html;
+        }
+
+        // --- UI & STATE MANAGEMENT ---
+
+        // State
+        let state = {
+            inputJson: `[
+  {
+    "title": "Modern Chair",
+    "price": 299,
+    "inStock": true,
+    "dimensions": {
+        "width": 60,
+        "height": 100
+    }
+  }
+]`,
+            outputSchema: '',
+            isMinified: true,
+            theme: 'dark' // Default dark per index.html request
+        };
+
+        // DOM Elements
+        const els = {
+            input: document.getElementById('inputJson'),
+            fileInput: document.getElementById('fileInput'),
+            uploadBtn: document.getElementById('uploadBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            minifyBtn: document.getElementById('minifyBtn'),
+            codeBlock: document.getElementById('codeBlock'),
+            outputContainer: document.getElementById('outputContainer'),
+            emptyState: document.getElementById('emptyState'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            copyBtn: document.getElementById('copyBtn'),
+            copyIcon: document.getElementById('copyIcon'),
+            copyText: document.getElementById('copyText'),
+            inputCount: document.getElementById('inputCharCount'),
+            outputCount: document.getElementById('outputCharCount'),
+            savedPercent: document.getElementById('savedPercent'),
+            errorToast: document.getElementById('errorToast'),
+            themeToggle: document.getElementById('themeToggle'),
+            root: document.documentElement
+        };
+
+        let debounceTimer;
+
+        // Initialization
+        function init() {
+            // Theme setup
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                state.theme = savedTheme;
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                state.theme = 'light';
+            }
+            updateThemeUI();
+
+            // Initial Value
+            els.input.value = state.inputJson;
+            processConversion();
+        }
+
+        // Logic
+        function updateThemeUI() {
+            if (state.theme === 'dark') {
+                els.root.classList.add('dark');
+                els.themeToggle.querySelector('span').textContent = 'light_mode';
+            } else {
+                els.root.classList.remove('dark');
+                els.themeToggle.querySelector('span').textContent = 'dark_mode';
+            }
+            localStorage.setItem('theme', state.theme);
+        }
+
+        function processConversion() {
+            const input = els.input.value;
+            state.inputJson = input;
+            
+            // Update counts
+            els.inputCount.textContent = `${input.length.toLocaleString()} chars`;
+
+            if (!input.trim()) {
+                state.outputSchema = '';
+                updateOutputUI(false);
+                els.errorToast.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const schema = generateOptimizedSchema(input, state.isMinified);
+                state.outputSchema = schema;
+                els.errorToast.classList.add('hidden');
+                updateOutputUI(true);
+            } catch (err) {
+                els.errorToast.classList.remove('hidden');
+                // Keep old output if error, or maybe clear it? 
+                // React app kept old output but showed error.
+            }
+        }
+
+        function updateOutputUI(hasOutput) {
+            const outputLen = state.outputSchema.length;
+            const inputLen = state.inputJson.length;
+            
+            els.outputCount.textContent = `${outputLen.toLocaleString()} chars`;
+            
+            if (hasOutput && inputLen > 0 && outputLen > 0) {
+                const saved = Math.max(0, ((1 - (outputLen / inputLen)) * 100));
+                els.savedPercent.textContent = `-${saved.toFixed(0)}% SIZE`;
+                els.savedPercent.classList.remove('hidden');
+            } else {
+                els.savedPercent.classList.add('hidden');
+            }
+
+            els.downloadBtn.disabled = !hasOutput;
+            els.copyBtn.disabled = !hasOutput;
+
+            if (hasOutput) {
+                els.emptyState.classList.add('hidden');
+                els.outputContainer.classList.remove('hidden');
+                
+                // Highlight logic
+                els.codeBlock.innerHTML = highlightCode(state.outputSchema);
+                
+                // Style update for minify
+                if (state.isMinified) {
+                    els.codeBlock.className = 'font-mono text-sm leading-7 transition-all duration-300 whitespace-pre-wrap break-all';
+                    els.minifyBtn.querySelector('span').textContent = 'unfold_more';
+                    els.minifyBtn.title = "Prettify";
+                } else {
+                    els.codeBlock.className = 'font-mono text-sm leading-7 transition-all duration-300 whitespace-pre overflow-x-auto';
+                    els.minifyBtn.querySelector('span').textContent = 'unfold_less';
+                    els.minifyBtn.title = "Minify";
+                }
+            } else {
+                els.emptyState.classList.remove('hidden');
+                els.outputContainer.classList.add('hidden');
+            }
+        }
+
+        // Event Listeners
+        els.themeToggle.addEventListener('click', () => {
+            state.theme = state.theme === 'light' ? 'dark' : 'light';
+            updateThemeUI();
+        });
+
+        els.input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(processConversion, 300);
+        });
+
+        els.clearBtn.addEventListener('click', () => {
+            els.input.value = '';
+            processConversion();
+        });
+
+        els.minifyBtn.addEventListener('click', () => {
+            state.isMinified = !state.isMinified;
+            processConversion();
+        });
+
+        els.uploadBtn.addEventListener('click', () => els.fileInput.click());
+
+        els.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                els.input.value = event.target.result;
+                processConversion();
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset allows re-uploading same file
+        });
+
+        els.downloadBtn.addEventListener('click', () => {
+            if (!state.outputSchema) return;
+            const blob = new Blob([state.outputSchema], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'schema.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        els.copyBtn.addEventListener('click', async () => {
+            if (!state.outputSchema) return;
+            try {
+                await navigator.clipboard.writeText(state.outputSchema);
+                
+                // Visual feedback
+                els.copyText.textContent = "Copied";
+                els.copyIcon.textContent = "check";
+                
+                setTimeout(() => {
+                    els.copyText.textContent = "Copy";
+                    els.copyIcon.textContent = "content_copy";
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy', err);
+            }
+        });
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
